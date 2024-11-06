@@ -306,8 +306,10 @@
 			};
 		})(),
 		warn = helpers.warn = function(str){
-			//Method for warning of errors
-			if (window.console && typeof window.console.warn === "function") console.warn(str);
+			if (typeof window !== "undefined") {
+				//Method for warning of errors
+				if (window.console && typeof window.console.warn === "function") console.warn(str);
+			}
 		},
 		amd = helpers.amd = (typeof define === 'function' && define.amd),
 		//-- Math methods
@@ -737,24 +739,28 @@
 		},
 		//Request animation polyfill - http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
 		requestAnimFrame = helpers.requestAnimFrame = (function(){
-			return window.requestAnimationFrame ||
-				window.webkitRequestAnimationFrame ||
-				window.mozRequestAnimationFrame ||
-				window.oRequestAnimationFrame ||
-				window.msRequestAnimationFrame ||
-				function(callback) {
-					return window.setTimeout(callback, 1000 / 60);
-				};
+			if (typeof window !== "undefined") {
+				return window.requestAnimationFrame ||
+					window.webkitRequestAnimationFrame ||
+					window.mozRequestAnimationFrame ||
+					window.oRequestAnimationFrame ||
+					window.msRequestAnimationFrame ||
+					function(callback) {
+						return window.setTimeout(callback, 1000 / 60);
+					};
+				}
 		})(),
 		cancelAnimFrame = helpers.cancelAnimFrame = (function(){
-			return window.cancelAnimationFrame ||
-				window.webkitCancelAnimationFrame ||
-				window.mozCancelAnimationFrame ||
-				window.oCancelAnimationFrame ||
-				window.msCancelAnimationFrame ||
-				function(callback) {
-					return window.clearTimeout(callback, 1000 / 60);
-				};
+			if (typeof window !== "undefined") {
+				return window.cancelAnimationFrame ||
+					window.webkitCancelAnimationFrame ||
+					window.mozCancelAnimationFrame ||
+					window.oCancelAnimationFrame ||
+					window.msCancelAnimationFrame ||
+					function(callback) {
+						return window.clearTimeout(callback, 1000 / 60);
+					};
+				}
 		})(),
 		animationLoop = helpers.animationLoop = function(callback,totalSteps,easingString,onProgress,onComplete,chartInstance){
 
@@ -856,12 +862,14 @@
 				width = chart.canvas.width,
 				height = chart.canvas.height;
 
-			if (window.devicePixelRatio) {
-				ctx.canvas.style.width = width + "px";
-				ctx.canvas.style.height = height + "px";
-				ctx.canvas.height = height * window.devicePixelRatio;
-				ctx.canvas.width = width * window.devicePixelRatio;
-				ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+			if (typeof window !== "undefined") {
+				if (window.devicePixelRatio) {
+					ctx.canvas.style.width = width + "px";
+					ctx.canvas.style.height = height + "px";
+					ctx.canvas.height = height * window.devicePixelRatio;
+					ctx.canvas.width = width * window.devicePixelRatio;
+					ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+				}
 			}
 		},
 		//-- Canvas methods
@@ -2145,7 +2153,9 @@
 
 			// If there are no animations queued, manually kickstart a digest, for lack of a better word
 			if (this.animations.length == 1) {
-				helpers.requestAnimFrame.call(window, this.digestWrapper);
+				if (typeof window !== "undefined") {
+					helpers.requestAnimFrame.call(window, this.digestWrapper);
+				}
 			}
 		},
 		// Cancel the animation for a given chart instance
@@ -2207,29 +2217,32 @@
 
 			// Do we have more stuff to animate?
 			if (this.animations.length > 0){
-				helpers.requestAnimFrame.call(window, this.digestWrapper);
+				if (typeof window !== "undefined") {
+					helpers.requestAnimFrame.call(window, this.digestWrapper);
+				}
 			}
 		}
 	};
 
-	// Attach global event to resize each chart instance when the browser resizes
-	helpers.addEvent(window, "resize", (function(){
-		// Basic debounce of resize function so it doesn't hurt performance when resizing browser.
-		var timeout;
-		return function(){
-			clearTimeout(timeout);
-			timeout = setTimeout(function(){
-				each(Chart.instances,function(instance){
-					// If the responsive flag is set in the chart instance config
-					// Cascade the resize event down to the chart.
-					if (instance.options.responsive){
-						instance.resize(instance.render, true);
-					}
-				});
-			}, 50);
-		};
-	})());
-
+	if (typeof window !== "undefined") {
+		// Attach global event to resize each chart instance when the browser resizes
+		helpers.addEvent(window, "resize", (function(){
+			// Basic debounce of resize function so it doesn't hurt performance when resizing browser.
+			var timeout;
+			return function(){
+				clearTimeout(timeout);
+				timeout = setTimeout(function(){
+					each(Chart.instances,function(instance){
+						// If the responsive flag is set in the chart instance config
+						// Cascade the resize event down to the chart.
+						if (instance.options.responsive){
+							instance.resize(instance.render, true);
+						}
+					});
+				}, 50);
+			};
+		})());
+	}
 
 	if (amd) {
 		define('Chart', [], function(){
